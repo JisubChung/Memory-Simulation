@@ -1,6 +1,6 @@
 package project;
 
-//Your Test JAVA Program, to be completed by you. 
+//page 458 - 461
 
 import java.io.*;
 
@@ -31,6 +31,7 @@ public class VMM
 	private int nextTLBEntry;			/* the next available entry in the TLB */
 
 	private PageTableEntry[] pageTable;	/* the page table */
+	//Physical memory is made up of frames which is made up of bytes
 	private Frame[] physicalMemory;		/* physical memory (organized in frames) */
 
 	private TLBEntry[] TLB;				/* the TLB */
@@ -47,7 +48,9 @@ public class VMM
 	 * Intializes the various data structures including:
 	 *
 	 * (1) Page table
+	 * 368
 	 * (2) TLB
+	 * 373
 	 * (3) Physical memory
 	 */
 	public VMM() {
@@ -58,7 +61,7 @@ public class VMM
 
 
 		// allocate the physical memory
-
+		
 
 		// initialize the next frame number
 		nextFrameNumber = 0;

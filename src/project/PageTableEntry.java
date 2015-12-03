@@ -21,7 +21,6 @@ public class PageTableEntry
 
 	public void setMapping(int frameNumber) {
 		this.frameNumber = frameNumber;
-
 		valid = true;
 	}
 }

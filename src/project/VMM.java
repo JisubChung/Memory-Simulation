@@ -165,6 +165,7 @@ public class VMM {
 			int test = 0;
 			for(int i = 0; i < PAGE_TABLE_ENTRIES && PageFault; i++) {
 				//found pageNumber in the PageTable
+		//		System.out.println("" + pageTable[i].getFrameNumber() + " = " + pageNumber + "   " + frameNumber);
 				if (pageTable[i].getFrameNumber() == pageNumber) {
 					frameNumber = pageTable[i].getFrameNumber();
 					PageFault = false;
@@ -176,10 +177,11 @@ public class VMM {
 			if (!PageFault) { /** Page Table Hit **/
 				//don't need to do anything because frameNumber is already obtained from the page table
 			}
+			//the case that we need to find a new frame for input
 			else { 	/** Page Fault **/
 
 				// get a free frame
-				frameNumber = getNextFrame();
+				frameNumber = nextFrameNumber;
 				/**
 				 * The following performs a
 				 * demand page from disk.
@@ -203,8 +205,7 @@ public class VMM {
 				// now establish a mapping
 				// of the frame in the page table
 				pageTable[nextFrameNumber].setMapping(frameNumber);
-//Right now the above line crashes because of out of bounds exception (nextFrameNumber => 256)
-//It should not be a problem once the rest of the program is finished.
+				getNextFrame();
 				//System.out.print(" * ");
 			}
 

@@ -138,11 +138,11 @@ public class VMM {
 		 */
 
 	}
-
+	
 	/**
 	 * Determine the physical address of a given virtual address
 	 */
-	public int getPhysicalAddress(int virtualAddress) throws java.io.IOException {
+	public int getPhysicalAddress(int virtualAddress) throws java.io.IOException {		
 		// determine the page number
 		int pageNumber = getPageNumber(virtualAddress);
 		//System.out.println("Page number = " + pageNumber);
@@ -158,21 +158,23 @@ public class VMM {
 		 * directly obtain the associated frame from the
 		 * given page number.
 		 */ //382
-//TODO: For now setting this to true, first make sure PageTable works properly.
+//TODO: For now setting this to true to make sure PageTable works properly.
 		if (true) {  /** TLB Miss **/
 			// Check the page table [for pageNumber]
 			boolean PageFault = true;
-			for(int i = 0; i < PAGE_TABLE_ENTRIES && i < nextFrameNumber && PageFault; i++) {
+			int test = 0;
+			for(int i = 0; i < PAGE_TABLE_ENTRIES && PageFault; i++) {
 				//found pageNumber in the PageTable
-//				System.out.println("Page # " + pageNumber);
-//				System.out.println("Frame# " + pageTable[i].getFrameNumber());
 				if (pageTable[i].getFrameNumber() == pageNumber) {
-					frameNumber = i;
+					frameNumber = pageTable[i].getFrameNumber();
 					PageFault = false;
+					test = i;
 				}
 			}
+			System.out.println("i " + test);
+			System.out.println("FN " + frameNumber);
 			if (!PageFault) { /** Page Table Hit **/
-				
+				//don't need to do anything because frameNumber is already obtained from the page table
 			}
 			else { 	/** Page Fault **/
 
@@ -200,10 +202,8 @@ public class VMM {
 
 				// now establish a mapping
 				// of the frame in the page table
-				System.out.println(nextFrameNumber);
-				System.out.println(frameNumber);
 				pageTable[nextFrameNumber].setMapping(frameNumber);
-//Right now the above line crashes because of out of bounds exception
+//Right now the above line crashes because of out of bounds exception (nextFrameNumber => 256)
 //It should not be a problem once the rest of the program is finished.
 				//System.out.print(" * ");
 			}
@@ -212,16 +212,10 @@ public class VMM {
 
 		}
 
-		//System.out.println("Frame = " + frameNumber);
-
 		// construct the physical address
-//		System.out.println("FN " + frameNumber);
-//		System.out.println("OS " + offset);
 		
 		physicalAddress = (frameNumber << 8) + offset;
 		
-//		System.out.println("PA " + physicalAddress);
-
 		return physicalAddress;
 	}
 
@@ -291,7 +285,6 @@ public class VMM {
 	public static void main(String[] args) throws java.io.IOException {
 		VMM something = new VMM();
 		something.runTranslation(System.getProperty("user.dir") + "/src/InputFile.txt");
-		something.getPhysicalAddress(1);
 		if (args.length != 1) {
 			System.err.println("Usage: java VMM <input file>");
 			System.exit(-1);

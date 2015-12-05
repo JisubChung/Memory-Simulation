@@ -15,10 +15,12 @@ public class PageTableEntry
 		return valid;
 	}
 
+	//returns the address of something in physical memory
 	public int getFrameNumber() {
 		return frameNumber;
 	}
 
+	//maps to a frame in physical memory
 	public void setMapping(int frameNumber) {
 		this.frameNumber = frameNumber;
 		valid = true;

@@ -4,64 +4,72 @@ package project;
 
 import java.io.*;
 
-public class VMM
-{
-	private static final int PAGE_TABLE_ENTRIES = 256; //256
-	private static final int NUMBER_OF_FRAMES = 256; //256
-	//private static final int PHYSICAL_MEMORY_SIZE = 256*256;
-	private static final int PHYSICAL_MEMORY_SIZE = Frame.FRAME_SIZE * NUMBER_OF_FRAMES;
-	private static final int PAGE_SIZE = 256;  //256
-	//private static final int NUMBER_OF_FRAMES = PHYSICAL_MEMORY_SIZE / PAGE_SIZE;	
+public class VMM {
+	private static final int PAGE_TABLE_ENTRIES = 256; // 256
+	private static final int NUMBER_OF_FRAMES = 256; // 256
+	// private static final int PHYSICAL_MEMORY_SIZE = 256*256;
+	private static final int PHYSICAL_MEMORY_SIZE = Frame.FRAME_SIZE
+			* NUMBER_OF_FRAMES;
+	private static final int PAGE_SIZE = 256; // 256
+	// private static final int NUMBER_OF_FRAMES = PHYSICAL_MEMORY_SIZE /
+	// PAGE_SIZE;
 	private static final int TLB_SIZE = 16;
 
-	private File fileName;				/* the file representing the simulated  disk */
-	private RandomAccessFile disk = null;	/* the input file of logical addresses */
+	private File fileName; /* the file representing the simulated disk */
+	private RandomAccessFile disk = null; /* the input file of logical addresses */
 	private BufferedReader r = null;
 
-	private int virtualAddress;			/* the virtual address being translated */
-	private int physicalAddress;			/* the physical address */
+	private int virtualAddress; /* the virtual address being translated */
+	private int physicalAddress; /* the physical address */
 
-	private int pageNumber;				/* virtual page number */
-	private int frameNumber;				/* physical frame number */
-	private int offset;					/* offset in page/frame */
+	private int pageNumber; /* virtual page number */
+	private int frameNumber; /* physical frame number */
+	private int offset; /* offset in page/frame */
 
-	private byte value;					/* the value stored at the physical address */
+	private byte value; /* the value stored at the physical address */
 
-	private int nextFrameNumber;			/* the next available frame number */
-	private int nextTLBEntry;			/* the next available entry in the TLB */
+	private int nextFrameNumber; /* the next available frame number */
+	private int nextTLBEntry; /* the next available entry in the TLB */
 
-	private PageTableEntry[] pageTable;	/* the page table */
-	//Physical memory is made up of frames which is made up of bytes
-	private Frame[] physicalMemory;		/* physical memory (organized in frames) */
+	private PageTableEntry[] pageTable; /* the page table */
+	// Physical memory is made up of frames which is made up of bytes
+	private Frame[] physicalMemory; /* physical memory (organized in frames) */
 
-	private TLBEntry[] TLB;				/* the TLB */
+	private TLBEntry[] TLB; /* the TLB */
 
-	private byte[] buffer;				/* the buffer for storing the page from disk */
+	private byte[] buffer; /* the buffer for storing the page from disk */
 
-	private int pageFaults;				/* the number of page faults */
-	private int TLBHits;				/* the number of TLB hits */
-	private int numberOfAddresses;		/* the number of addresses that were translated */
+	private int pageFaults; /* the number of page faults */
+	private int TLBHits; /* the number of TLB hits */
+	private int numberOfAddresses; /*
+									 * the number of addresses that were
+									 * translated
+									 */
 
-	/** 
+	/**
 	 * Constructor.
 	 *
 	 * Intializes the various data structures including:
 	 *
-	 * (1) Page table
-	 * 368
-	 * (2) TLB
-	 * 373
-	 * (3) Physical memory
+	 * (1) Page table (2) TLB (3) Physical memory
 	 */
 	public VMM() {
 		// create the page table
-
+		// There are 256 entries in PageTable
+		// Each entry can point to a frame in PhysicalMemory
+		pageTable = new PageTableEntry[PAGE_TABLE_ENTRIES];
+		for (int i = 0; i < PAGE_TABLE_ENTRIES; i++) {
+			pageTable[i] = new PageTableEntry();
+		}
 
 		// create the TLB
-
+// TODO: after creating the basic structure of Page Tables, do this.
 
 		// allocate the physical memory
-		
+		physicalMemory = new Frame[NUMBER_OF_FRAMES];
+		for (int i = 0; i < NUMBER_OF_FRAMES; i++) {
+			physicalMemory[i] = new Frame();
+		}
 
 		// initialize the next frame number
 		nextFrameNumber = 0;
@@ -76,13 +84,12 @@ public class VMM
 		pageFaults = 0;
 		TLBHits = 0;
 	}
-	
 
 	/**
 	 * Extract the page number.
 	 */
 	public int getPageNumber(int virtualAddress) {
-		return  (virtualAddress & 0x0000ff00) >> 8;
+		return (virtualAddress & 0x0000ff00) >> 8;
 	}
 
 	/**
@@ -93,17 +100,15 @@ public class VMM
 	}
 
 	/**
-	 * Return the number of the next available frame.
-	 * This just uses a simple approach of assigning
-	 * the next frame in memory.
+	 * Return the number of the next available frame. This just uses a simple
+	 * approach of assigning the next frame in memory.
 	 */
 	public int getNextFrame() {
 		return nextFrameNumber++;
 	}
 
 	/**
-	 * Check the TLB for a mapping of
-	 * page number to physical frame
+	 * Check the TLB for a mapping of page number to physical frame
 	 *
 	 * @return -1 if no mapping or the frame number >= 0
 	 */
@@ -111,12 +116,10 @@ public class VMM
 		int frameNumber = -1;
 
 		/**
-		 * A "real" TLB would use associative memory
-		 * where we could check all values in the
-		 * TLB memory at the same time. We have to 
-		 * in fact do a linear search of our TLB
-	 	 */
-
+		 * A "real" TLB would use associative memory where we could check all
+		 * values in the TLB memory at the same time. We have to in fact do a
+		 * linear search of our TLB
+		 */
 
 		return frameNumber;
 	}
@@ -127,27 +130,25 @@ public class VMM
 	public void setTLBMapping(int pageNumber, int frameNumber) {
 		// establish the mapping
 
-
 		/**
 		 * Update the next TLB entry.
 		 *
-		 * This uses a very simple FIFO approach for
-		 * managing entries in the TLB.
+		 * This uses a very simple FIFO approach for managing entries in the
+		 * TLB.
 		 */
 
 	}
-		
 
 	/**
 	 * Determine the physical address of a given virtual address
 	 */
 	public int getPhysicalAddress(int virtualAddress) throws java.io.IOException {
 		// determine the page number
-
+		int pageNumber = getPageNumber(virtualAddress);
 		//System.out.println("Page number = " + pageNumber);
 
 		// determine the offset
-
+		int offset = getOffset(virtualAddress);
 		//System.out.println("offset = " + offset);
 
 		/**
@@ -156,16 +157,27 @@ public class VMM
 		 * a TLB miss. Where we have a TLB hit, we can
 		 * directly obtain the associated frame from the
 		 * given page number.
-		 */
-		if () {  /** TLB Miss **/
-			// Check the page table
-			if () { /** Page Table Hit **/
+		 */ //382
+//TODO: For now setting this to true, first make sure PageTable works properly.
+		if (true) {  /** TLB Miss **/
+			// Check the page table [for pageNumber]
+			boolean PageFault = true;
+			for(int i = 0; i < PAGE_TABLE_ENTRIES && i < nextFrameNumber && PageFault; i++) {
+				//found pageNumber in the PageTable
+//				System.out.println("Page # " + pageNumber);
+//				System.out.println("Frame# " + pageTable[i].getFrameNumber());
+				if (pageTable[i].getFrameNumber() == pageNumber) {
+					frameNumber = i;
+					PageFault = false;
+				}
+			}
+			if (!PageFault) { /** Page Table Hit **/
 				
 			}
 			else { 	/** Page Fault **/
 
 				// get a free frame
-
+				frameNumber = getNextFrame();
 				/**
 				 * The following performs a
 				 * demand page from disk.
@@ -177,18 +189,22 @@ public class VMM
 				 */
 
 				// seek to the appropriate page in the BACKING_STORE file
-
+				disk.seek(pageNumber * NUMBER_OF_FRAMES);
 				// read in a page-size chunk from BACKING_STORE
 				// into a temporary buffer
-
-
+				disk.read(buffer);
+				
 				// copy the contents of the buffer 
 				// to the appropriate physical frame
-
+				physicalMemory[pageNumber].setFrame(buffer);
 
 				// now establish a mapping
 				// of the frame in the page table
-
+				System.out.println(nextFrameNumber);
+				System.out.println(frameNumber);
+				pageTable[nextFrameNumber].setMapping(frameNumber);
+//Right now the above line crashes because of out of bounds exception
+//It should not be a problem once the rest of the program is finished.
 				//System.out.print(" * ");
 			}
 
@@ -199,7 +215,12 @@ public class VMM
 		//System.out.println("Frame = " + frameNumber);
 
 		// construct the physical address
+//		System.out.println("FN " + frameNumber);
+//		System.out.println("OS " + offset);
+		
 		physicalAddress = (frameNumber << 8) + offset;
+		
+//		System.out.println("PA " + physicalAddress);
 
 		return physicalAddress;
 	}
@@ -209,37 +230,39 @@ public class VMM
 	 */
 	public byte getValue(int physicalAddress) throws java.io.IOException {
 		/* disk.seek(virtualAddress); */
-		// read() returns a byte, but since bytes 
+		// read() returns a byte, but since bytes
 		// in Java are signed, we use an integer
 		// to store its value to obtain the signed
 		// value of the byte
 		/* return disk.read(); */
 
 		/**
-		 * Essentially, the code below performs the following:
-		 * return physicalMemory[frameNumber].readWord(offset);
+		 * Essentially, the code below performs the following: return
+		 * physicalMemory[frameNumber].readWord(offset);
 		 */
-		return physicalMemory[((physicalAddress & 0x0000ff00) >> 8)].readWord(physicalAddress & 0x000000ff);
+		return physicalMemory[((physicalAddress & 0x0000ff00) >> 8)]
+				.readWord(physicalAddress & 0x000000ff);
 	}
 
-	/** 
+	/**
 	 * Generate statistics.
 	 */
 	public void generateStatistics() {
 	}
 
 	/**
-	 * The primary method that runs the translation of logical to physical addresses.
+	 * The primary method that runs the translation of logical to physical
+	 * addresses.
 	 */
 	public void runTranslation(String inputFile) throws java.io.IOException {
-		//Use a try-catch block since the logic involves IO operations.
+		// Use a try-catch block since the logic involves IO operations.
 		try {
-			r = new BufferedReader(new FileReader(inputFile));
-             fileName = new File("BACKING_STORE");
-             disk = new RandomAccessFile(fileName, "r");
+			r = new BufferedReader(new FileReader(System.getProperty("user.dir") + "/src/InputFile.txt"));
+			fileName = new File(System.getProperty("user.dir") + "/src/BACKING_STORE.txt");
+			disk = new RandomAccessFile(fileName, "r");
 			String stringValue;
-			
-			while ( (stringValue = r.readLine()) != null) {
+
+			while ((stringValue = r.readLine()) != null) {
 				// read in the virtual address
 				virtualAddress = Integer.parseInt(stringValue);
 
@@ -247,32 +270,56 @@ public class VMM
 				physicalAddress = getPhysicalAddress(virtualAddress);
 
 				numberOfAddresses++;
-			
-				// get the value stored at the physical address	
+
+				// get the value stored at the physical address
 				value = getValue(physicalAddress);
-				
-				System.out.println("Virtual address: " + virtualAddress + " Physical address: " + physicalAddress + " Value: " + value);
+
+				System.out.println("Virtual address: " + virtualAddress
+						+ " Physical address: " + physicalAddress + " Value: "
+						+ value);
 			}
 
 			generateStatistics();
-		}
-		catch (java.io.IOException ioe) {
+		} catch (java.io.IOException ioe) {
 			System.err.println(ioe);
-		}
-		finally {
+		} finally {
 			disk.close();
 			r.close();
 		}
 	}
 
 	public static void main(String[] args) throws java.io.IOException {
+		VMM something = new VMM();
+		something.runTranslation(System.getProperty("user.dir") + "/src/InputFile.txt");
+		something.getPhysicalAddress(1);
 		if (args.length != 1) {
 			System.err.println("Usage: java VMM <input file>");
 			System.exit(-1);
+		} else {
+			// Ready to run runTranslation() in VMM.
 		}
-		else {
-
-			//Ready to run runTranslation() in VMM.
-		}
-	}
+	}	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

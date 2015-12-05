@@ -20,4 +20,8 @@ public class Frame
 	public byte readWord(int offset) {
 		return frameValue[offset];
 	}
+	
+	public void test() {
+		System.out.println("yes");
+	}
 }

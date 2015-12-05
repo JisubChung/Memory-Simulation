@@ -63,7 +63,10 @@ public class VMM {
 		}
 
 		// create the TLB
-// TODO: after creating the basic structure of Page Tables, do this.
+		TLB = new TLBEntry[TLB_SIZE];
+		for (int i = 0; i < TLB_SIZE; i++) {
+			TLB[i] = new TLBEntry();
+		}
 
 		// allocate the physical memory
 		physicalMemory = new Frame[NUMBER_OF_FRAMES];
@@ -83,6 +86,7 @@ public class VMM {
 		// initialize the statistics counters
 		pageFaults = 0;
 		TLBHits = 0;
+		numberOfAddresses = 0;
 	}
 
 	/**
@@ -120,6 +124,13 @@ public class VMM {
 		 * values in the TLB memory at the same time. We have to in fact do a
 		 * linear search of our TLB
 		 */
+		
+		for(int i = 0; i < TLB_SIZE; i++) {
+			if(TLB[i].checkPageNumber(pageNumber)) {
+				frameNumber = TLB[i].getFrameNumber();
+				TLBHits++;
+			}
+		}
 
 		return frameNumber;
 	}
@@ -136,7 +147,12 @@ public class VMM {
 		 * This uses a very simple FIFO approach for managing entries in the
 		 * TLB.
 		 */
-
+		
+		//since TLB is small, this works fast enough. Otherwise use first pointer
+		for(int i = TLB_SIZE-1; i > 0; i--) {
+			TLB[i] = TLB[i-1];
+		}
+		TLB[0].setMapping(pageNumber, frameNumber);
 	}
 	
 	/**
@@ -145,11 +161,11 @@ public class VMM {
 	public int getPhysicalAddress(int virtualAddress) throws java.io.IOException {		
 		// determine the page number
 		int pageNumber = getPageNumber(virtualAddress);
-		//System.out.println("Page number = " + pageNumber);
+		System.out.println("Page number = " + pageNumber);
 
 		// determine the offset
 		int offset = getOffset(virtualAddress);
-		//System.out.println("offset = " + offset);
+		System.out.println("offset = " + offset);
 
 		/**
 		 * First check the TLB. We only have to run the 
@@ -157,28 +173,25 @@ public class VMM {
 		 * a TLB miss. Where we have a TLB hit, we can
 		 * directly obtain the associated frame from the
 		 * given page number.
-		 */ //382
-//TODO: For now setting this to true to make sure PageTable works properly.
-		if (true) {  /** TLB Miss **/
+		 */
+		frameNumber = checkTLB(pageNumber);
+		
+		if (frameNumber == -1) {  /** TLB Miss **/
 			// Check the page table [for pageNumber]
 			boolean PageFault = true;
-			int test = 0;
 			for(int i = 0; i < PAGE_TABLE_ENTRIES && PageFault; i++) {
 				//found pageNumber in the PageTable
-		//		System.out.println("" + pageTable[i].getFrameNumber() + " = " + pageNumber + "   " + frameNumber);
 				if (pageTable[i].getFrameNumber() == pageNumber) {
 					frameNumber = pageTable[i].getFrameNumber();
 					PageFault = false;
-					test = i;
 				}
 			}
-			System.out.println("i " + test);
-			System.out.println("FN " + frameNumber);
 			if (!PageFault) { /** Page Table Hit **/
 				//don't need to do anything because frameNumber is already obtained from the page table
 			}
 			//the case that we need to find a new frame for input
 			else { 	/** Page Fault **/
+				pageFaults++;
 
 				// get a free frame
 				frameNumber = nextFrameNumber;
@@ -193,7 +206,7 @@ public class VMM {
 				 */
 
 				// seek to the appropriate page in the BACKING_STORE file
-				disk.seek(pageNumber * NUMBER_OF_FRAMES);
+				disk.seek(pageNumber * PAGE_SIZE);
 				// read in a page-size chunk from BACKING_STORE
 				// into a temporary buffer
 				disk.read(buffer);
@@ -208,13 +221,11 @@ public class VMM {
 				getNextFrame();
 				//System.out.print(" * ");
 			}
-
 			// lastly, update the TLB
-
+			setTLBMapping(pageNumber, frameNumber);
 		}
 
 		// construct the physical address
-		
 		physicalAddress = (frameNumber << 8) + offset;
 		
 		return physicalAddress;
@@ -243,11 +254,15 @@ public class VMM {
 	 * Generate statistics.
 	 */
 	public void generateStatistics() {
+		System.out.println("Number of Translated Addresses = " + numberOfAddresses);
+		System.out.println("Page Faults = " + pageFaults);
+		System.out.println("Page Fault Rate = " + (double) pageFaults/numberOfAddresses);
+		System.out.println("TLB Hits = " + TLBHits);
+		System.out.println("TLB Hit Rate = " + (double) TLBHits/numberOfAddresses);
 	}
 
 	/**
-	 * The primary method that runs the translation of logical to physical
-	 * addresses.
+	 * The primary method that runs the translation of logical to physical addresses.
 	 */
 	public void runTranslation(String inputFile) throws java.io.IOException {
 		// Use a try-catch block since the logic involves IO operations.
@@ -272,6 +287,7 @@ public class VMM {
 				System.out.println("Virtual address: " + virtualAddress
 						+ " Physical address: " + physicalAddress + " Value: "
 						+ value);
+				
 			}
 
 			generateStatistics();

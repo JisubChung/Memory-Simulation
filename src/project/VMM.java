@@ -1,7 +1,5 @@
 package project;
 
-//page 458 - 461
-
 import java.io.*;
 
 public class VMM {
@@ -124,9 +122,9 @@ public class VMM {
 		 * values in the TLB memory at the same time. We have to in fact do a
 		 * linear search of our TLB
 		 */
-		
-		for(int i = 0; i < TLB_SIZE; i++) {
-			if(TLB[i].checkPageNumber(pageNumber)) {
+
+		for (int i = 0; i < TLB_SIZE; i++) {
+			if (TLB[i].checkPageNumber(pageNumber)) {
 				frameNumber = TLB[i].getFrameNumber();
 				TLBHits++;
 			}
@@ -148,61 +146,58 @@ public class VMM {
 		 * TLB.
 		 */
 		
-		//since TLB is small, this works fast enough. Otherwise use first pointer
-		for(int i = TLB_SIZE-1; i > 0; i--) {
-			TLB[i] = TLB[i-1];
-		}
-		TLB[0].setMapping(pageNumber, frameNumber);
+		TLB[nextTLBEntry].setMapping(pageNumber, frameNumber);
+		nextTLBEntry = (nextTLBEntry+1)%16;
 	}
-	
+
 	/**
 	 * Determine the physical address of a given virtual address
 	 */
-	public int getPhysicalAddress(int virtualAddress) throws java.io.IOException {		
+	public int getPhysicalAddress(int virtualAddress)
+			throws java.io.IOException {
 		// determine the page number
-		int pageNumber = getPageNumber(virtualAddress);
+		pageNumber = getPageNumber(virtualAddress);
 		System.out.println("Page number = " + pageNumber);
 
 		// determine the offset
-		int offset = getOffset(virtualAddress);
+		offset = getOffset(virtualAddress);
 		System.out.println("offset = " + offset);
 
 		/**
-		 * First check the TLB. We only have to run the 
-		 * algorithm to extract the frame in the case of
-		 * a TLB miss. Where we have a TLB hit, we can
-		 * directly obtain the associated frame from the
-		 * given page number.
+		 * First check the TLB. We only have to run the algorithm to extract the
+		 * frame in the case of a TLB miss. Where we have a TLB hit, we can
+		 * directly obtain the associated frame from the given page number.
 		 */
 		frameNumber = checkTLB(pageNumber);
-		
-		if (frameNumber == -1) {  /** TLB Miss **/
+
+		if (frameNumber == -1) {
+			/** TLB Miss **/
 			// Check the page table [for pageNumber]
 			boolean PageFault = true;
-			for(int i = 0; i < PAGE_TABLE_ENTRIES && PageFault; i++) {
-				//found pageNumber in the PageTable
+			for (int i = 0; i < PAGE_TABLE_ENTRIES && PageFault; i++) {
+				// found pageNumber in the PageTable
 				if (pageTable[i].getFrameNumber() == pageNumber) {
 					frameNumber = pageTable[i].getFrameNumber();
 					PageFault = false;
 				}
 			}
-			if (!PageFault) { /** Page Table Hit **/
-				//don't need to do anything because frameNumber is already obtained from the page table
+			if (!PageFault) {
+				/** Page Table Hit **/
+				// don't need to do anything because frameNumber is already
+				// obtained from the page table
 			}
-			//the case that we need to find a new frame for input
-			else { 	/** Page Fault **/
+			// the case that we need to find a new frame for input
+			else {
+				/** Page Fault **/
 				pageFaults++;
 
 				// get a free frame
 				frameNumber = nextFrameNumber;
 				/**
-				 * The following performs a
-				 * demand page from disk.
+				 * The following performs a demand page from disk.
 				 *
-				 * It does so by:
-				 * (1) Reads the page from BACKING_STORE;
-				 * (2) updates the page table;
-				 * (3) updates the TLB.
+				 * It does so by: (1) Reads the page from BACKING_STORE; (2)
+				 * updates the page table; (3) updates the TLB.
 				 */
 
 				// seek to the appropriate page in the BACKING_STORE file
@@ -210,8 +205,8 @@ public class VMM {
 				// read in a page-size chunk from BACKING_STORE
 				// into a temporary buffer
 				disk.read(buffer);
-				
-				// copy the contents of the buffer 
+
+				// copy the contents of the buffer
 				// to the appropriate physical frame
 				physicalMemory[pageNumber].setFrame(buffer);
 
@@ -219,7 +214,7 @@ public class VMM {
 				// of the frame in the page table
 				pageTable[nextFrameNumber].setMapping(frameNumber);
 				getNextFrame();
-				//System.out.print(" * ");
+				// System.out.print(" * ");
 			}
 			// lastly, update the TLB
 			setTLBMapping(pageNumber, frameNumber);
@@ -227,7 +222,7 @@ public class VMM {
 
 		// construct the physical address
 		physicalAddress = (frameNumber << 8) + offset;
-		
+
 		return physicalAddress;
 	}
 
@@ -254,21 +249,27 @@ public class VMM {
 	 * Generate statistics.
 	 */
 	public void generateStatistics() {
-		System.out.println("Number of Translated Addresses = " + numberOfAddresses);
+		System.out.println("Number of Translated Addresses = "
+				+ numberOfAddresses);
 		System.out.println("Page Faults = " + pageFaults);
-		System.out.println("Page Fault Rate = " + (double) pageFaults/numberOfAddresses);
+		System.out.println("Page Fault Rate = " + (double) pageFaults
+				/ numberOfAddresses);
 		System.out.println("TLB Hits = " + TLBHits);
-		System.out.println("TLB Hit Rate = " + (double) TLBHits/numberOfAddresses);
+		System.out.println("TLB Hit Rate = " + (double) TLBHits
+				/ numberOfAddresses);
 	}
 
 	/**
-	 * The primary method that runs the translation of logical to physical addresses.
+	 * The primary method that runs the translation of logical to physical
+	 * addresses.
 	 */
 	public void runTranslation(String inputFile) throws java.io.IOException {
 		// Use a try-catch block since the logic involves IO operations.
 		try {
-			r = new BufferedReader(new FileReader(System.getProperty("user.dir") + "/src/InputFile.txt"));
-			fileName = new File(System.getProperty("user.dir") + "/src/BACKING_STORE.txt");
+			r = new BufferedReader(new FileReader(
+					System.getProperty("user.dir") + "/src/InputFile.txt"));
+			fileName = new File(System.getProperty("user.dir")
+					+ "/src/BACKING_STORE.txt");
 			disk = new RandomAccessFile(fileName, "r");
 			String stringValue;
 
@@ -287,7 +288,7 @@ public class VMM {
 				System.out.println("Virtual address: " + virtualAddress
 						+ " Physical address: " + physicalAddress + " Value: "
 						+ value);
-				
+
 			}
 
 			generateStatistics();
@@ -301,35 +302,13 @@ public class VMM {
 
 	public static void main(String[] args) throws java.io.IOException {
 		VMM something = new VMM();
-		something.runTranslation(System.getProperty("user.dir") + "/src/InputFile.txt");
+		something.runTranslation(System.getProperty("user.dir")
+				+ "/src/InputFile.txt");
 		if (args.length != 1) {
 			System.err.println("Usage: java VMM <input file>");
 			System.exit(-1);
 		} else {
 			// Ready to run runTranslation() in VMM.
 		}
-	}	
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
